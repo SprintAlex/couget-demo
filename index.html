@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cabinet Couget · Être rappelé</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#14213d; --paper:#f6f3ec; --line:#d9d2c3; --accent:#b5651d; --ok:#2f6b4f; --muted:#5b6170; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.5 Inter, system-ui, sans-serif; }
+  header { padding:20px 24px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .brand { font-family:Fraunces, Georgia, serif; font-size:22px; font-weight:600; }
+  .brand small { display:block; font:400 13px Inter, sans-serif; color:var(--muted); }
+  .tag { font-size:12px; color:var(--muted); border:1px solid var(--line); padding:3px 8px; border-radius:4px; }
+  main { max-width:560px; margin:40px auto; padding:0 16px; }
+  h1 { font-family:Fraunces, Georgia, serif; font-weight:500; font-size:34px; line-height:1.15; margin:0 0 10px; }
+  .lead { color:var(--muted); margin:0 0 28px; }
+  form { background:#fff; border:1px solid var(--line); border-radius:8px; padding:24px; display:grid; gap:16px; }
+  label { font-size:14px; font-weight:500; display:grid; gap:6px; }
+  input, select { font:inherit; padding:11px 12px; border:1px solid var(--line); border-radius:6px; background:#fff; color:var(--ink); }
+  input:focus, select:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .consent { display:flex; gap:10px; align-items:flex-start; font-weight:400; font-size:14px; }
+  .consent input { margin-top:3px; }
+  button { font:600 16px Inter, sans-serif; border:0; border-radius:6px; padding:13px 18px; cursor:pointer; }
+  .primary { background:var(--ink); color:#fff; }
+  .primary:disabled { opacity:.5; cursor:wait; }
+  .err { color:#a33; font-size:14px; min-height:1em; }
+  /* écran d'appel */
+  #call { display:none; position:fixed; inset:0; background:#0f1a30; color:#fff; align-items:center; justify-content:center; }
+  .phone { text-align:center; padding:24px; }
+  .avatar { width:96px; height:96px; border-radius:50%; background:var(--accent); display:grid; place-items:center; font:600 36px Fraunces, serif; margin:0 auto 18px; }
+  .ring .avatar { animation:pulse 1.2s infinite; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(181,101,29,.6)} 100%{box-shadow:0 0 0 28px rgba(181,101,29,0)} }
+  .who { font-family:Fraunces, serif; font-size:28px; }
+  .sub { color:#b9c0d0; margin:6px 0 36px; }
+  .btns { display:flex; gap:40px; justify-content:center; }
+  .round { width:72px; height:72px; border-radius:50%; font-size:13px; }
+  .decline { background:#c0392b; color:#fff; }
+  .accept { background:var(--ok); color:#fff; }
+  footer { text-align:center; font-size:12px; color:var(--muted); padding:24px 16px 40px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Cabinet Couget<small>Courtage en crédit immobilier et assurance emprunteur</small></div>
+  <span class="tag">Démonstration</span>
+</header>
+<main>
+  <h1>Un conseiller vous rappelle dans la minute.</h1>
+  <p class="lead">Achat, rachat de crédit ou assurance de prêt : laissez vos coordonnées, nous vous rappelons tout de suite pour fixer un rendez-vous avec Monsieur Couget.</p>
+  <form id="f">
+    <label>Prénom et nom<input name="nom" required autocomplete="name"></label>
+    <label>Téléphone<input name="telephone" required type="tel" autocomplete="tel" placeholder="06 12 34 56 78"></label>
+    <label>Email<input name="email" required type="email" autocomplete="email"></label>
+    <label>Votre besoin
+      <select name="besoin" required>
+        <option value="">Choisir</option>
+        <option>un achat immobilier</option>
+        <option>un rachat ou une renégociation de crédit</option>
+        <option>une assurance de prêt</option>
+        <option>autre chose</option>
+      </select>
+    </label>
+    <label class="consent"><input type="checkbox" name="consentement" required> <span id="ctext">J'accepte d'être rappelé par le Cabinet Couget au sujet de ma demande.</span></label>
+    <button class="primary" id="go">Être rappelé maintenant</button>
+    <div class="err" id="err"></div>
+  </form>
+</main>
+<footer>Démo réalisée par SprintIA. L'appel est passé par une assistante IA, qui se présente comme telle.</footer>
+
+<div id="call">
+  <div class="phone ring" id="phone">
+    <div class="avatar">C</div>
+    <div class="who">Cabinet Couget</div>
+    <div class="sub" id="status">Appel entrant…</div>
+    <div class="btns" id="btns">
+      <button class="round decline" id="no">Refuser</button>
+      <button class="round accept" id="yes">Décrocher</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import Vapi from "https://esm.sh/@vapi-ai/web@2.7.1";
+const N8N = "https://n8n.sprint-ia.fr/webhook", ASSISTANT = "e41a26f3-d67f-4395-9d8a-2829c7b91baf";
+const vapi = new Vapi("2839f179-5cc3-4712-81c6-fca74caff853");
+const $ = id => document.getElementById(id);
+let lead = null, timer = null, t0 = 0, tick = null;
+
+$("f").addEventListener("submit", async e => {
+  e.preventDefault(); $("go").disabled = true; $("err").textContent = "";
+  const d = Object.fromEntries(new FormData(e.target));
+  d.consentement_texte = $("ctext").textContent; d.consentement = true;
+  try {
+    const r = await fetch(N8N + "/couget-lead", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(d) });
+    lead = await r.json();
+    if (!r.ok || !lead.lead_id) throw new Error(lead.message || "refus");
+  } catch (x) { $("err").textContent = "Envoi impossible, réessayez."; $("go").disabled = false; return; }
+  setTimeout(ring, 4000);  // le rappel arrive quelques secondes après l'envoi
+});
+
+function ring() {
+  $("call").style.display = "flex";
+  timer = setTimeout(() => missed("pas_de_reponse"), 30000);
+}
+async function missed(raison) {
+  clearTimeout(timer);
+  $("phone").classList.remove("ring"); $("btns").style.display = "none";
+  $("status").textContent = "Appel manqué. Le cabinet vous recontacte.";
+  fetch(N8N + "/couget-noanswer", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ lead_id:lead.lead_id, raison }) });
+}
+$("no").onclick = () => missed("refuse");
+$("yes").onclick = () => {
+  clearTimeout(timer);
+  $("phone").classList.remove("ring"); $("status").textContent = "Connexion…";
+  $("btns").innerHTML = '<button class="round decline" id="hang">Raccrocher</button>';
+  $("hang").onclick = () => { vapi.stop(); fin("Appel terminé. Merci !"); };
+  vapi.start(ASSISTANT, { variableValues: lead.variables }).catch(e => { console.error(e); fin("Erreur de connexion."); });
+};
+function fin(msg) { clearInterval(tick); $("status").textContent = msg; $("btns").style.display = "none"; }
+vapi.on("call-start", () => {
+  t0 = Date.now();
+  tick = setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000); $("status").textContent = `En ligne · ${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`; }, 500);
+});
+vapi.on("call-end", () => fin("Appel terminé. Merci !"));
+vapi.on("error", e => { console.error(e); fin("Erreur de connexion."); });
+</script>
+</body>
+</html>
