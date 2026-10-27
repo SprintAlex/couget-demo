@@ -117,13 +117,15 @@ $("yes").onclick = () => {
   $("phone").classList.remove("ring"); $("status").textContent = "Connexion…";
   $("btns").innerHTML = '<button class="round decline" id="hang">Raccrocher</button>';
   $("hang").onclick = () => { vapi.stop(); fin("Appel terminé. Merci !"); };
-  vapi.start(ASSISTANT, { variableValues: lead.variables }).catch(e => { console.error(e); fin("Erreur de connexion."); });
+  vapi.start(ASSISTANT, { variableValues: lead.variables }).then(enLigne).catch(e => { console.error(e); fin("Erreur de connexion."); });
 };
 function fin(msg) { clearInterval(tick); $("status").textContent = msg; $("btns").style.display = "none"; }
-vapi.on("call-start", () => {
+function enLigne() {
+  if (tick) return;  // call-start ne se déclenche pas toujours : start() résolu suffit
   t0 = Date.now();
   tick = setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000); $("status").textContent = `En ligne · ${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`; }, 500);
-});
+}
+vapi.on("call-start", enLigne);
 vapi.on("call-end", () => fin("Appel terminé. Merci !"));
 vapi.on("error", e => { console.error(e); fin("Erreur de connexion."); });
 </script>
